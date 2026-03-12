@@ -1,6 +1,7 @@
 (module
    (func $host.call (import "env" "host.call"))
    (func (export "empty")) ;; should succeed iff the stack limit is >= 16
+   ;; frame cost: 16 + 2*4 = 24
    (func $i32.stack (export "i32.stack") (param i32)
       (if (local.get 0) (then
          (local.get 0)
@@ -45,5 +46,25 @@
          (call $all.stack)
          (return)
       ))
+   )
+   ;; frame cost: 16 + 4 = 20
+   (func $i32.twice (export "i32.twice") (param i32 i32)
+      (call $i32.stack (local.get 0))
+      (call $i32.stack (local.get 1))
+   )
+   (func $repeat.host (export "repeat.host") (param i32 i32)
+      (loop
+          (local.get 0)
+          (i32.eqz)
+          (br_if 1)
+          (call $host.call)
+          (local.get 1)
+          (call $i32.stack)
+          (local.get 0)
+          (i32.const -1)
+          (i32.add)
+          (local.set 0)
+          (br 0)
+      )
    )
 )
