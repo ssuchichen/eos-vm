@@ -344,7 +344,7 @@ namespace eosio { namespace vm {
       static void type_check_args(const Func_type& ft, Args&&...) {
          EOS_VM_ASSERT(sizeof...(Args) == ft.param_types.size(), wasm_interpreter_exception, "wrong number of arguments");
          uint32_t i = 0;
-         EOS_VM_ASSERT((... && (to_wasm_type_v<detail::type_converter_t<Host>, Args> == ft.param_types.at(i++))), wasm_interpreter_exception, "unexpected argument type");
+         EOS_VM_ASSERT((... && (to_wasm_type_v<detail::type_converter_t<Host>, std::decay_t<Args>> == ft.param_types.at(i++))), wasm_interpreter_exception, "unexpected argument type");
       }
 
       static void handle_signal(int sig) {
@@ -743,11 +743,11 @@ namespace eosio { namespace vm {
             inc_pc();
             std::uint32_t frame_size = _mod->get_function_stack_size(index);
             EOS_VM_ASSERT (frame_size <= _remaining_call_depth, wasm_interpreter_exception, "stack overflow");
+            scope_guard g{[this, saved = _remaining_call_depth]{ _remaining_call_depth = saved; }};
             _remaining_call_depth -= frame_size;
             push_call( activation_frame{ nullptr, 0 } );
             _rhf(_state.host, get_interface(), _mod->import_functions[index]);
             pop_call();
-            _remaining_call_depth += frame_size;
          } else {
             // const auto& ft = _mod->types[_mod->functions[index - _mod->get_imported_functions_size()]];
             // type_check(ft);
@@ -1019,7 +1019,7 @@ namespace eosio { namespace vm {
     private:
 
       template <typename... Args>
-      void push_args(Args&&... args) {
+      void push_args(Args... args) {
          auto tc = detail::type_converter_t<Host>{ _host, get_interface() };
          (void)tc;
          (... , push_operand(detail::resolve_result(tc, std::forward<Args>(args))));
