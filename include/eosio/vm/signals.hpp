@@ -1,5 +1,6 @@
 #pragma once
 
+#include <eosio/vm/allocator.hpp>
 #include <eosio/vm/exceptions.hpp>
 #include <eosio/vm/span.hpp>
 #include <eosio/vm/utils.hpp>

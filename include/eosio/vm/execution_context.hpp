@@ -344,7 +344,7 @@ namespace eosio { namespace vm {
       static void type_check_args(const Func_type& ft, Args&&...) {
          EOS_VM_ASSERT(sizeof...(Args) == ft.param_types.size(), wasm_interpreter_exception, "wrong number of arguments");
          uint32_t i = 0;
-         EOS_VM_ASSERT((... && (to_wasm_type_v<detail::type_converter_t<Host>, Args> == ft.param_types.at(i++))), wasm_interpreter_exception, "unexpected argument type");
+         EOS_VM_ASSERT((... && (to_wasm_type_v<detail::type_converter_t<Host>, std::decay_t<Args>> == ft.param_types.at(i++))), wasm_interpreter_exception, "unexpected argument type");
       }
 
       static void handle_signal(int sig) {
@@ -1019,7 +1019,7 @@ namespace eosio { namespace vm {
     private:
 
       template <typename... Args>
-      void push_args(Args&&... args) {
+      void push_args(Args... args) {
          auto tc = detail::type_converter_t<Host>{ _host, get_interface() };
          (void)tc;
          (... , push_operand(detail::resolve_result(tc, std::forward<Args>(args))));
